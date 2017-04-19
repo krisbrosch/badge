@@ -1,4 +1,4 @@
-#Badge
+# Badge
 
 This is a personal electronic badge, worn at Defcon 24. It is a collaboration between Kris Brosch and Chris James.
 
@@ -12,11 +12,11 @@ The first mode demonstrates the LEDs and the WiFi. The LEDS show a spinning patt
 
 The second mode demonstrates the accelerometer; the LEDs are split into a yellow and blue "sunset" which changes with the board's orientation.
 
-##Building the Firmware
+## Building the Firmware
 
 We are building the firmware with arm-none-eabi-gcc on ArchLinux. The build.sh script simply runs make in the badge/build directory.
 
-##Flashing and Debugging with OpenOCD and GDB
+## Flashing and Debugging with OpenOCD and GDB
 
 In order to use OpenOCD to flash the board, you'll need to obtain:
 * The version of OpenOCD that supports the MSP432
