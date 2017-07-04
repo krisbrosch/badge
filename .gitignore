@@ -1,6 +1,9 @@
-board/badge.b#*
-board/badge.s#*
-board/ledplace.scr
+board/*.bak
+board/*.bck
+board/*.kicad_pcb-bak
+board/*.net
+board/*.xml
+board/*.csv
 openocd/interface.cfg
 openocd/openocd
 badge/build
