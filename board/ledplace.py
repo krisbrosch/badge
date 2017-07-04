@@ -1,68 +1,180 @@
-
 import pcbnew
 import math
-
-board = pcbnew.GetBoard()
 
 center = (4.0, -4.0)
 radius = 1.2
 
-c_offset  = (0.25, -0.04)
-v1_offset = (0.175, 0.075)
-v2_offset = (0.175, -0.075)
-v3_offset = (0.025, -0.05)
-v4_offset = (-0.175, -0.025)
+class RelativePoint:
+  def __init__(self, off_x, off_y, rot_off = 0):
+    self.off_x = off_x
+    self.off_y = off_y
+    self.rot_off = rot_off
+    if (self.off_x == 0.0) and (self.off_y == 0.0):
+      self.off_angle = 0
+      self.radius = radius
+    else:
+      self.off_angle = math.degrees(math.atan( self.off_x / (radius + self.off_y) ))
+      self.radius = self.off_x / math.sin(math.radians(self.off_angle))
 
-c_off_angle = math.degrees(math.atan( c_offset[0] / (radius + c_offset[1]) ))
-c_radius = c_offset[0] / math.sin(math.radians(c_off_angle))
+  def angle(self, angle):
+    return (angle - self.off_angle) % 360
 
-v1_off_angle = math.degrees(math.atan( v1_offset[0] / (radius + v1_offset[1]) ))
-v1_radius = v1_offset[0] / math.sin(math.radians(v1_off_angle))
-v2_off_angle = math.degrees(math.atan( v2_offset[0] / (radius + v2_offset[1]) ))
-v2_radius = v2_offset[0] / math.sin(math.radians(v2_off_angle))
-v3_off_angle = math.degrees(math.atan( v3_offset[0] / (radius + v3_offset[1]) ))
-v3_radius = v3_offset[0] / math.sin(math.radians(v3_off_angle))
-v4_off_angle = math.degrees(math.atan( v4_offset[0] / (radius + v4_offset[1]) ))
-v4_radius = v4_offset[0] / math.sin(math.radians(v4_off_angle))
+  def pos(self, angle):
+    pos = (round(center[0] + (math.cos(math.radians(self.angle(angle)))*self.radius), 3),
+           round(center[1] + (math.sin(math.radians(self.angle(angle)))*self.radius), 3))
+    return pos
 
+  def kipoint(self, angle):
+    pos = self.pos(angle)
+    return pcbnew.wxPoint(pos[0] * 25400000.0, pos[1] * -25400000.0)
+
+  def kirot(self, angle):
+    return ((angle + 180 - self.off_angle - self.rot_off) % 360) * 10
+
+ledpt = RelativePoint(0.0, 0.0, 90)
+cpt  = RelativePoint(0.25, -0.04)
+cppt = RelativePoint(0.242, -0.076)
+v1pt = RelativePoint(0.175, 0.075)
+v2pt = RelativePoint(0.175, -0.075)
+v3pt = RelativePoint(0.025, -0.05)
+v4pt = RelativePoint(-0.175, -0.025)
+p1pt = RelativePoint(0.0965, -0.0630)
+p2pt = RelativePoint(0.0965, 0.0630)
+p3pt = RelativePoint(-0.0965, 0.0630)
+p4pt = RelativePoint(-0.0965, -0.0630)
+
+board = pcbnew.GetBoard()
+top_layer = board.GetLayerID("F.Cu")
+bottom_layer = board.GetLayerID("B.Cu")
+
+nets = board.GetNetsByName()
 
 angle = 90
+lastAngle = 120
 for i in range(12):
   lednum = i+1
-  cangle = (angle - c_off_angle) % 360
-  v1angle = (angle - v1_off_angle) % 360
-  v2angle = (angle - v2_off_angle) % 360
-  v3angle = (angle - v3_off_angle) % 360
-  v4angle = (angle - v4_off_angle) % 360
-  ledpos = (round(center[0] + (math.cos(math.radians(angle))*radius), 3), 
-            round(center[1] + (math.sin(math.radians(angle))*radius), 3))
-  cpos = (round(center[0] + (math.cos(math.radians(cangle))*c_radius), 3),
-          round(center[1] + (math.sin(math.radians(cangle))*c_radius), 3))
-
-  v1pos = (round(center[0] + (math.cos(math.radians(v1angle))*v1_radius), 3),
-           round(center[1] + (math.sin(math.radians(v1angle))*v1_radius), 3))
-  v2pos = (round(center[0] + (math.cos(math.radians(v2angle))*v2_radius), 3),
-           round(center[1] + (math.sin(math.radians(v2angle))*v2_radius), 3))
-  v3pos = (round(center[0] + (math.cos(math.radians(v3angle))*v3_radius), 3),
-           round(center[1] + (math.sin(math.radians(v3angle))*v3_radius), 3))
-  v4pos = (round(center[0] + (math.cos(math.radians(v4angle))*v4_radius), 3),
-           round(center[1] + (math.sin(math.radians(v4angle))*v4_radius), 3))
-
-  ledrot = (angle - 90) % 360
-  crot = cangle
 
   led = board.FindModuleByReference("LED%d" % lednum)
-  led.SetPosition(pcbnew.wxPoint(ledpos[0] * 25400000.0, ledpos[1] * -25400000.0))
-  led.SetOrientation((ledrot + 180) * 10)
+  led.SetPosition(ledpt.kipoint(angle))
+  led.SetOrientation(ledpt.kirot(angle))
 
   cap = board.FindModuleByReference("LEDC%d" % lednum)
-  cap.SetPosition(pcbnew.wxPoint(cpos[0] * 25400000.0, cpos[1] * -25400000.0))
-  cap.SetOrientation((crot + 180) * 10)
+  cap.SetPosition(cpt.kipoint(angle))
+  cap.SetOrientation(cpt.kirot(angle))
 
-  #f.write("via 'LED_DATA%d' (%.3f %.3f)\n" % (lednum, v1pos[0], v1pos[1]))
-  #f.write("via 'VCC' (%.3f %.3f)\n" % (v2pos[0], v2pos[1]))
-  #f.write("via 'VCC' (%.3f %.3f)\n" % (v3pos[0], v3pos[1]))
-  #f.write("via 'LED_DATA%d' (%.3f %.3f)\n" % (lednum-1, v4pos[0], v4pos[1]))
+  if lednum < 12:
+    netname = "/LEDs/LED_DATA%d" % (lednum)
 
+    # Pin 2 -> Via 1
+    # (reaching forward towards the next led)
+
+    track = pcbnew.TRACK(board)
+    track.SetStart(p2pt.kipoint(angle))
+    track.SetEnd(v1pt.kipoint(angle))
+    track.SetWidth(254000)
+    track.SetLayer(top_layer)
+    board.Add(track)
+    track.SetNet(nets[netname])
+
+    via = pcbnew.VIA(board)
+    board.Add(via)
+    via.SetLayerPair(top_layer, bottom_layer)
+    via.SetPosition(v1pt.kipoint(angle))
+    via.SetWidth(685800)
+    via.SetNet(nets[netname])
+
+  if lednum > 1:
+    netname = "/LEDs/LED_DATA%d" % (lednum - 1)
+
+    # Pin 4 -> Via 4
+    # (reaching back towards the previous led)
+
+    track = pcbnew.TRACK(board)
+    track.SetStart(p4pt.kipoint(angle))
+    track.SetEnd(v4pt.kipoint(angle))
+    track.SetWidth(254000)
+    track.SetLayer(top_layer)
+    board.Add(track)
+    track.SetNet(nets[netname])
+
+    via = pcbnew.VIA(board)
+    board.Add(via)
+    via.SetLayerPair(top_layer, bottom_layer)
+    via.SetPosition(v4pt.kipoint(angle))
+    via.SetWidth(685800)
+    via.SetNet(nets[netname])
+
+    # Via 4 -> Previous Via 1
+    # (connecting to the previous led's via on the bottom)
+
+    track = pcbnew.TRACK(board)
+    track.SetStart(v4pt.kipoint(angle))
+    track.SetEnd(v1pt.kipoint(lastAngle))
+    track.SetWidth(254000)
+    track.SetLayer(bottom_layer)
+    board.Add(track)
+    track.SetNet(nets[netname])
+
+  netname = "+BATT"
+
+  # Pin 1 -> Via 2
+  # (power forward)
+
+  track = pcbnew.TRACK(board)
+  track.SetStart(p1pt.kipoint(angle))
+  track.SetEnd(v2pt.kipoint(angle))
+  track.SetWidth(610000)
+  track.SetLayer(top_layer)
+  board.Add(track)
+  track.SetNet(nets[netname])
+
+  via = pcbnew.VIA(board)
+  board.Add(via)
+  via.SetLayerPair(top_layer, bottom_layer)
+  via.SetPosition(v2pt.kipoint(angle))
+  via.SetWidth(685800)
+  via.SetNet(nets[netname])
+
+  # Via 2 -> Capacitor pad
+  # (power to the capacitors)
+
+  track = pcbnew.TRACK(board)
+  track.SetStart(v2pt.kipoint(angle))
+  track.SetEnd(cppt.kipoint(angle))
+  track.SetWidth(610000)
+  track.SetLayer(top_layer)
+  board.Add(track)
+  track.SetNet(nets[netname])
+
+  # Pin 1 -> Via 3
+  # (power back)
+
+  track = pcbnew.TRACK(board)
+  track.SetStart(p1pt.kipoint(angle))
+  track.SetEnd(v3pt.kipoint(angle))
+  track.SetWidth(610000)
+  track.SetLayer(top_layer)
+  board.Add(track)
+  track.SetNet(nets[netname])
+
+  via = pcbnew.VIA(board)
+  board.Add(via)
+  via.SetLayerPair(top_layer, bottom_layer)
+  via.SetPosition(v3pt.kipoint(angle))
+  via.SetWidth(685800)
+  via.SetNet(nets[netname])
+
+  # Via 3 -> Previous Via 2
+  # (connect power back)
+
+  track = pcbnew.TRACK(board)
+  track.SetStart(v3pt.kipoint(angle))
+  track.SetEnd(v2pt.kipoint(lastAngle))
+  track.SetWidth(610000)
+  track.SetLayer(bottom_layer)
+  board.Add(track)
+  track.SetNet(nets[netname])
+
+  lastAngle = angle
   angle = (angle - 30) % 360
 
