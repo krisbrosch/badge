@@ -1,0 +1,8 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP SW_Push_12_34
+D Push button switch, generic, four pins (1&2 shorted, 3&4 shorted)
+K switch normally-open pushbutton push-button
+$ENDCMP
+#
+#End Doc Library

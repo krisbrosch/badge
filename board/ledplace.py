@@ -1,16 +1,12 @@
-#!/usr/bin/env python
 
+import pcbnew
 import math
 
-#center = (1.2, 1.2)
-center = (1.4, 1.4)
-#radius = 1.0
+board = pcbnew.GetBoard()
+
+center = (4.0, -4.0)
 radius = 1.2
-#radius = 0.6
 
-f = open("ledplace.scr", "w")
-
-#c_offset  = (0.2, -0.04)
 c_offset  = (0.25, -0.04)
 v1_offset = (0.175, 0.075)
 v2_offset = (0.175, -0.075)
@@ -54,17 +50,19 @@ for i in range(12):
 
   ledrot = (angle - 90) % 360
   crot = cangle
-  #crot = angle
-  f.write("move LED%d (%.3f %.3f)\n" % (lednum, ledpos[0], ledpos[1]))
-  f.write("move C%d (%.3f %.3f)\n" % (lednum, cpos[0], cpos[1]))
-  f.write("rotate =R%d LED%d\n" % (ledrot, lednum))
-  f.write("rotate =R%d C%d\n" % (crot, lednum))
-  f.write("via 'LED_DATA%d' (%.3f %.3f)\n" % (lednum, v1pos[0], v1pos[1]))
-  f.write("via 'VCC' (%.3f %.3f)\n" % (v2pos[0], v2pos[1]))
-  f.write("via 'VCC' (%.3f %.3f)\n" % (v3pos[0], v3pos[1]))
-  f.write("via 'LED_DATA%d' (%.3f %.3f)\n" % (lednum-1, v4pos[0], v4pos[1]))
+
+  led = board.FindModuleByReference("LED%d" % lednum)
+  led.SetPosition(pcbnew.wxPoint(ledpos[0] * 25400000.0, ledpos[1] * -25400000.0))
+  led.SetOrientation((ledrot + 180) * 10)
+
+  cap = board.FindModuleByReference("LEDC%d" % lednum)
+  cap.SetPosition(pcbnew.wxPoint(cpos[0] * 25400000.0, cpos[1] * -25400000.0))
+  cap.SetOrientation((crot + 180) * 10)
+
+  #f.write("via 'LED_DATA%d' (%.3f %.3f)\n" % (lednum, v1pos[0], v1pos[1]))
+  #f.write("via 'VCC' (%.3f %.3f)\n" % (v2pos[0], v2pos[1]))
+  #f.write("via 'VCC' (%.3f %.3f)\n" % (v3pos[0], v3pos[1]))
+  #f.write("via 'LED_DATA%d' (%.3f %.3f)\n" % (lednum-1, v4pos[0], v4pos[1]))
+
   angle = (angle - 30) % 360
-
-f.close()
-
 
