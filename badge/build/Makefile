@@ -1,7 +1,7 @@
 
 CC=arm-none-eabi-gcc
 OBJCOPY=arm-none-eabi-objcopy
-CFLAGS=-mcpu=cortex-m4 -march=armv7e-m -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -D__MSP432P401R__ -Dgcc 
+CFLAGS=-mcpu=cortex-m4 -march=armv7e-m -mthumb -mfloat-abi=hard -mfpu=fpv4-sp-d16 -D__MSP432P401R__ -Dgcc -Wall -Werror
 INCLUDEFLAGS=-I"../TIinclude" -I"../TIinclude/CMSIS" -I"../driverlib/MSP432P4xx"
 DEBUGFLAGS=-g -Wall 
 DEPFLAGS=-MMD -MP -MF"$(@:%.o=%.d)"

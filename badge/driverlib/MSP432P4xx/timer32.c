@@ -68,7 +68,7 @@ void Timer32_initModule(uint32_t timer, uint32_t preScaler, uint32_t resolution,
             || resolution == TIMER32_PRESCALER_256);
 
     TIMER32_CMSIS(timer)->CONTROL = TIMER32_CMSIS(timer)->CONTROL
-    		& (~TIMER32_CONTROL_PRESCALE_MASK) | preScaler;
+    		& ((~TIMER32_CONTROL_PRESCALE_MASK) | preScaler);
 
 }
 
