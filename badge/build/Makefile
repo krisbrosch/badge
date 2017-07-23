@@ -22,7 +22,7 @@ badge.out: $(OBJECTS)
 	$(CC) $(CFLAGS) -o badge.out $(OBJECTS) $(LINKFLAGS)
 
 badge.hex: badge.out
-	$(OBJCOPY) -O ihex badge.out badge.hex
+	$(OBJCOPY) -O ihex --gap-fill 0 badge.out badge.hex
 
 .PHONY: clean
 
