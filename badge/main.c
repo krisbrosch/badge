@@ -7,6 +7,7 @@
 #include "agc.h"
 #include "timing.h"
 #include "leddemos.h"
+#include "sercli.h"
 
 int oldDemoInit() {
   int i;
@@ -56,26 +57,6 @@ int oldDemoCleanup() {
   return 0;
 }
 
-int serialDemoInit() {
-  int i;
-  for(i = 0; i < LEDCOUNT; i++) {
-    ledData[i] = 0x100000;
-  }
-  sendLEDData();
-  return 0;
-}
-
-int serialDemoRun() {
-  char strbuf[128];
-  if(ser_peek() != -1) {
-    ser_getLine(strbuf, 128);
-    ser_print(strbuf);
-    ser_print("\r\n");
-    ser_printf("%08x\r\n", 0x42);
-  }
-  return 0;
-}
-
 struct BadgeMode {
   int (*init)();
   int (*run)();
@@ -84,10 +65,10 @@ struct BadgeMode {
 
 struct BadgeMode badgeModes[] = {
   //{&oldDemoInit, &oldDemoRun, &oldDemoCleanup},
-  //{&serialDemoInit, &serialDemoRun, NULL},
   {&coolLEDsInit, &coolLEDsRun, &coolLEDsCleanup},
   {&liquidAGCInit, &liquidAGCRun, &liquidAGCCleanup},
-  //{&compassInit, &compassRun, &compassCleanup}
+  //{&compassInit, &compassRun, &compassCleanup},
+  {&serialCliInit, &serialCliRun, &serialCliCleanup},
 };
 
 int main(void) 

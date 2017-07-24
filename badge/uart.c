@@ -159,10 +159,13 @@ int uart_getLine(uint32_t module, char *s, size_t length, int echo) {
         uart_txByteSync(module, '\n');
       }
       done = 1;
-    } else if((c == 0x08) || (c == 128)) { // backspace
+    } else if((c == 0x08) || (c == 0x7f)) { // backspace
       if(i > 0) {
         if(echo) {
-          uart_txByteSync(module, c);
+          //uart_txByteSync(module, c);
+          uart_txByteSync(module, 0x08);
+          uart_txByteSync(module, 0x20);
+          uart_txByteSync(module, 0x08);
         }
         i--;
       }
