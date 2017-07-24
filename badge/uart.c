@@ -208,6 +208,19 @@ void uart_init() {
   MAP_Interrupt_enableInterrupt(INT_EUSCIA2);
 }
 
+void uart_disable() {
+  MAP_Interrupt_disableInterrupt(INT_EUSCIA0);
+  MAP_UART_disableInterrupt(EUSCI_A0_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
+  MAP_UART_disableModule(EUSCI_A0_BASE);
+  MAP_GPIO_setAsInputPin(GPIO_PORT_P1, GPIO_PIN2);
+  MAP_GPIO_setAsOutputPin(GPIO_PORT_P1, GPIO_PIN3);
+
+  MAP_Interrupt_disableInterrupt(INT_EUSCIA2);
+  MAP_UART_disableInterrupt(EUSCI_A2_BASE, EUSCI_A_UART_RECEIVE_INTERRUPT);
+  MAP_UART_disableModule(EUSCI_A2_BASE);
+  MAP_GPIO_setAsInputPin(GPIO_PORT_P3, GPIO_PIN2);
+  MAP_GPIO_setAsOutputPin(GPIO_PORT_P3, GPIO_PIN3);
+}
 
 // TODO: When RX buffer fills this causes hang because we don't read the UART's
 // RX buf, the interrupt flag is never cleared, and the the interrupt repeatedly

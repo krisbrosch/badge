@@ -5,6 +5,9 @@
 #include "sercli.h"
 #include "uart.h"
 #include "rgbled.h"
+#include "wifi.h"
+#include "driverlib.h"
+#include "timing.h"
 
 #define NUM_CLI_PARAMS 3
 #define COMMAND_LINE_LENGTH 256
@@ -27,9 +30,11 @@ struct CliCommand {
 
 int command_help();
 int command_leds();
+int command_wifi_serial();
 
 struct CliCommand commands[] = {
   {"leds", command_leds, "Set color of all leds"},
+  {"wifi_serial", command_wifi_serial, "Pass through serial to wifi."},
   {"help", command_help, "This help"},
 };
 
@@ -52,6 +57,36 @@ int command_leds(char *args[]) {
     return -1;
   }
   ledWaitColor = strtoul(args[0], NULL, 16);
+  return 0;
+}
+
+int command_wifi_serial(char *args[]) {
+  ser_print("\r\n-- Starting ESP8266 Serial Passthrough Mode - press button to break --\r\n\r");
+  uart_txByteSync(SER_MODULE, '\n');
+  uart_disable();
+
+  WIFI_PORT |= (1 << WIFI_CH_PD_PIN);
+
+  // Either button breaks
+  while( (P1IN & 0x12) == 0x12 ) {
+    // This is an experimental hack, but it seems to work well enough
+    // TODO: add RTS/DTR or seperate bootloader mode?
+    if(P1IN & 0x4) {
+      P3OUT |= 0x8;
+    } else {
+      P3OUT &= ~0x8;
+    }
+    if(P3IN & 0x4) {
+      P1OUT |= 0x8;
+    } else {
+      P1OUT &= ~0x8;
+    }
+  }
+
+  WIFI_PORT &= ~(1 << WIFI_CH_PD_PIN);
+  
+  uart_init();
+  ser_print("\r\n\r\n-- ESP8266 Passthrough Done. --\r\n\r\n");
   return 0;
 }
 

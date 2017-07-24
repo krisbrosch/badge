@@ -38,5 +38,7 @@ int32_t uart_peek(uint32_t module);
 // - eUSCI_A0 as UART at 115200 using p1.2 as RX and p1.3 as TX
 // - eUSCI_A2 as UART at 115200 using p3.2 as RX and p3.3 as TX
 void uart_init();
+// Disable the above UARTs, leaving them as GPIO input/output for RX/TX pins
+void uart_disable();
 
 #endif
