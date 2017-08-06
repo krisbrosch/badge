@@ -61,28 +61,58 @@ int command_leds(char *args[]) {
 }
 
 int command_wifi_serial(char *args[]) {
+  // TODO: This works ok, but it deserves a better solution
+  volatile void *BTNS = &P1IN;
+  uint32_t btnmask = 0x12;
+  volatile void *TX1 = &BITBAND_PERI(P3OUT, 3);
+  volatile void *TX2 = &BITBAND_PERI(P1OUT, 3);
+  volatile void *RX1 = &BITBAND_PERI(P3IN, 2);
+  volatile void *RX2 = &BITBAND_PERI(P1IN, 2);
+  volatile void *RST = &BITBAND_PERI(P3OUT, 5);
+  volatile void *GP0 = &BITBAND_PERI(P3OUT, 7);
+  volatile void *RTS = &BITBAND_PERI(P8IN, 7);
+  volatile void *DTR = &BITBAND_PERI(P8IN, 6);
+  uint8_t temp1 = 0, temp2 = 0, temp3 = 0;
+
   ser_print("\r\n-- Starting ESP8266 Serial Passthrough Mode - press button to break --\r\n\r");
   uart_txByteSync(SER_MODULE, '\n');
   uart_disable();
 
+  P8DIR &= 0x3f;
+  WIFI_PORT_DIR |= (1 << WIFI_GPIO0_PIN);
+  WIFI_PORT |= (1 << WIFI_GPIO0_PIN);
+  //WIFI_PORT_DIR |= (1 << WIFI_CH_PD_PIN);
   WIFI_PORT |= (1 << WIFI_CH_PD_PIN);
 
-  // Either button breaks
-  while( (P1IN & 0x12) == 0x12 ) {
-    // This is an experimental hack, but it seems to work well enough
-    // TODO: add RTS/DTR or seperate bootloader mode?
-    if(P1IN & 0x4) {
-      P3OUT |= 0x8;
-    } else {
-      P3OUT &= ~0x8;
-    }
-    if(P3IN & 0x4) {
-      P1OUT |= 0x8;
-    } else {
-      P1OUT &= ~0x8;
-    }
-  }
+  MAP_Interrupt_disableMaster();
 
+  asm volatile (
+    "wifi_serial_loop:\n"
+    "ldrb %[temp1], [%[RX2]]\n"
+    "strb %[temp1], [%[TX1]]\n"
+    "ldrb %[temp1], [%[RX1]]\n"
+    "strb %[temp1], [%[TX2]]\n"
+    "ldrb %[temp1], [%[RTS]]\n"
+    "ldrb %[temp2], [%[DTR]]\n"
+    "movs %[temp3], 1\n"
+    "eors %[temp3], %[temp3], %[temp1]\n"
+    "orrs %[temp3], %[temp3], %[temp2]\n"
+    "strb %[temp3], [%[RST]]\n"
+    "movs %[temp3], 1\n"
+    "eors %[temp3], %[temp3], %[temp2]\n"
+    "orrs %[temp3], %[temp3], %[temp1]\n"
+    "strb %[temp3], [%[GP0]]\n"
+    "ldrb %[temp1], %[BTNS]\n"
+    "tst %[temp1], %[btnmask]\n"
+    "beq wifi_serial_loop\n"
+    :
+    : [TX1] "r" (TX1), [TX2] "r" (TX2), [RX1] "r" (RX1), [RX2] "r" (RX2), [RST] "r" (RST), [GP0] "r" (GP0), [RTS] "r" (RTS), [DTR] "r" (DTR), [temp1] "r" (temp1), [temp2] "r" (temp2), [temp3] "r" (temp3), [BTNS] "r" (BTNS), [btnmask] "r" (btnmask)
+    :
+  );
+  MAP_Interrupt_enableMaster();
+
+  WIFI_PORT |= (1 << WIFI_RST_PIN);
+  WIFI_PORT |= (1 << WIFI_GPIO0_PIN);
   WIFI_PORT &= ~(1 << WIFI_CH_PD_PIN);
   
   uart_init();
