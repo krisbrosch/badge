@@ -34,11 +34,11 @@ int32_t battery_getPercent() {
 
   value = batttemp_singleSample(BATTTEMP_BATTERY);
 
-  value = value >> 2;
-  value = value - 573;
+  value = value >> 1;
+  value = value - 1147;
   if(value < 0) value = 0;
   value = value * 10000;
-  value = value / 17067;
+  value = value / 15515;
   if(value > 100) value = 100;
 
   return value;
