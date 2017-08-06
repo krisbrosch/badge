@@ -8,6 +8,7 @@
 #include "wifi.h"
 #include "driverlib.h"
 #include "timing.h"
+#include "batttemp.h"
 
 #define NUM_CLI_PARAMS 3
 #define COMMAND_LINE_LENGTH 256
@@ -29,10 +30,12 @@ struct CliCommand {
 };
 
 int command_help();
+int command_stats();
 int command_leds();
 int command_wifi_serial();
 
 struct CliCommand commands[] = {
+  {"stats", command_stats, "Read status of battery"},
   {"leds", command_leds, "Set color of all leds"},
   {"wifi_serial", command_wifi_serial, "Pass through serial to wifi."},
   {"help", command_help, "This help"},
@@ -44,11 +47,18 @@ int command_help() {
   for(i = 0; i < sizeof(commands) / sizeof(struct CliCommand); i++) {
     ser_print(" ");
     ser_print(commands[i].command);
-    ser_print("\t");
+    ser_print("\t\t");
     ser_print(commands[i].helpText);
     ser_print("\r\n");
   }
   ser_print("\r\n");
+  return 0;
+}
+
+int command_stats() {
+  int32_t value;
+  value = battery_getPercent();
+  ser_printf("Battery percentage: %d\%\r\n", value);
   return 0;
 }
 
