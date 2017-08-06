@@ -102,8 +102,9 @@ int command_wifi_serial(char *args[]) {
     "eors %[temp3], %[temp3], %[temp2]\n"
     "orrs %[temp3], %[temp3], %[temp1]\n"
     "strb %[temp3], [%[GP0]]\n"
-    "ldrb %[temp1], %[BTNS]\n"
-    "tst %[temp1], %[btnmask]\n"
+    "ldrb %[temp1], [%[BTNS]]\n"
+    "and %[temp1], %[btnmask]\n"
+    "cmp %[temp1], %[btnmask]\n"
     "beq wifi_serial_loop\n"
     :
     : [TX1] "r" (TX1), [TX2] "r" (TX2), [RX1] "r" (RX1), [RX2] "r" (RX2), [RST] "r" (RST), [GP0] "r" (GP0), [RTS] "r" (RTS), [DTR] "r" (DTR), [temp1] "r" (temp1), [temp2] "r" (temp2), [temp3] "r" (temp3), [BTNS] "r" (BTNS), [btnmask] "r" (btnmask)
